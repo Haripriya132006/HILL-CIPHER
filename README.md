@@ -117,7 +117,7 @@ else:
 
 ```
 ## OUTPUT
-<img width="1595" height="598" alt="image" src="https://github.com/user-attachments/assets/7deeb5c6-9758-4e2e-8928-735d4ee7dfed" />
+<img width="1595" height="598" alt="image" src="https://github.com/user-attachments/assets/9ece6b98-6d93-4b38-9792-418262919230" />
 <img width="1595" height="598" alt="image" src="https://github.com/user-attachments/assets/78bd437a-9628-44cd-a55c-2d6a01b33d4a" />
 
 ## RESULT
