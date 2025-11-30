@@ -30,96 +30,93 @@ STEP-5: Combine all these groups to get the complete cipher text.
 
 ## PROGRAM 
 ```
-import math
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
-# Convert letter → number (A=0,...Z=25)
-def text_to_nums(text):
-    return [ord(c) - 65 for c in text.upper() if c.isalpha()]
+int mod26(int x) {
+    x %= 26;
+    if (x < 0) x += 26;
+    return x;
+}
 
-# Convert number → letter
-def nums_to_text(nums):
-    return ''.join(chr(n + 65) for n in nums)
+int main() {
+    char keyStr[5], text[200], mode;
+    int K[2][2], invK[2][2], det, detInv = -1;
 
-# Break text into chunks of size n
-def chunkify(nums, n):
-    while len(nums) % n != 0:
-        nums.append(0)  # padding with 'A'
-    return [nums[i:i+n] for i in range(0, len(nums), n)]
+    printf("Enter 4-letter UPPERCASE key: ");
+    scanf("%4s", keyStr);
 
-# Multiply matrix × vector (mod 26)
-def mat_mul(M, vec):
-    return [(M[0][0]*vec[0] + M[0][1]*vec[1]) % 26,
-            (M[1][0]*vec[0] + M[1][1]*vec[1]) % 26]
+    printf("Encrypt or Decrypt? (E/D): ");
+    scanf(" %c", &mode);
 
-# Compute inverse of 2×2 matrix mod 26
-def inverse_matrix(M):
-    det = (M[0][0]*M[1][1] - M[0][1]*M[1][0]) % 26
-    if math.gcd(det, 26) != 1:
-        raise ValueError("Key is NOT invertible modulo 26.")
+    printf("Enter UPPERCASE text: ");
+    scanf("%199s", text);
 
-    det_inv = pow(det, -1, 26)  # modular inverse
+    // convert text to uppercase
+    for (int i = 0; text[i]; i++) text[i] = toupper(text[i]);
 
-    return [
-        [( M[1][1] * det_inv) % 26, (-M[0][1] * det_inv) % 26],
-        [(-M[1][0] * det_inv) % 26, ( M[0][0] * det_inv) % 26]
-    ]
+    // key matrix
+    K[0][0] = keyStr[0] - 'A';
+    K[0][1] = keyStr[1] - 'A';
+    K[1][0] = keyStr[2] - 'A';
+    K[1][1] = keyStr[3] - 'A';
 
-# Encrypt
-def encrypt(pt, key):
-    nums = text_to_nums(pt)
-    chunks = chunkify(nums, 2)
+    // determinant
+    det = mod26(K[0][0] * K[1][1] - K[0][1] * K[1][0]);
 
-    result = []
-    for c in chunks:
-        result.extend(mat_mul(key, c))
-    return nums_to_text(result)
+    // find modular inverse of determinant
+    for (int i = 0; i < 26; i++)
+        if (mod26(det * i) == 1)
+            detInv = i;
 
-# Decrypt
-def decrypt(ct, key):
-    key_inv = inverse_matrix(key)
+    if (detInv == -1) {
+        printf("Key not invertible!\n");
+        return 0;
+    }
 
-    nums = text_to_nums(ct)
-    chunks = chunkify(nums, 2)
+    // inverse matrix
+    invK[0][0] = mod26(detInv *  K[1][1]);
+    invK[0][1] = mod26(detInv * -K[0][1]);
+    invK[1][0] = mod26(detInv * -K[1][0]);
+    invK[1][1] = mod26(detInv *  K[0][0]);
 
-    result = []
-    for c in chunks:
-        result.extend(mat_mul(key_inv, c))
-    return nums_to_text(result)
+    int n = strlen(text);
+    if (n % 2 != 0) { text[n] = 'A'; text[n+1] = '\0'; n++; }
 
+    char out[200];
+    int a, b;
 
-# ----------- MAIN PROGRAM -------------
+    for (int i = 0; i < n; i += 2) {
+        a = text[i] - 'A';
+        b = text[i+1] - 'A';
 
-print("Hill Cipher (2×2 key only)\n")
+        int r1, r2;
 
-k = input("Enter 4-letter key (example: HILL): ").upper()
-if len(k) != 4 or not k.isalpha():
-    print("Invalid key!")
-    exit()
+        if (mode == 'E' || mode == 'e') {
+            r1 = mod26(K[0][0] * a + K[0][1] * b);
+            r2 = mod26(K[1][0] * a + K[1][1] * b);
+        } else {
+            r1 = mod26(invK[0][0] * a + invK[0][1] * b);
+            r2 = mod26(invK[1][0] * a + invK[1][1] * b);
+        }
 
-# Build 2×2 key matrix
-key = [
-    [ord(k[0]) - 65, ord(k[1]) - 65],
-    [ord(k[2]) - 65, ord(k[3]) - 65]
-]
+        out[i] = r1 + 'A';
+        out[i+1] = r2 + 'A';
+    }
 
-mode = input("Encrypt or Decrypt? (E/D): ").upper()
+    out[n] = '\0';
 
-if mode == "E":
-    pt = input("Enter plaintext: ")
-    print("Ciphertext:", encrypt(pt, key))
+    printf("Output: %s\n", out);
+    return 0;
+}
 
-elif mode == "D":
-    ct = input("Enter ciphertext: ")
-    print("Plaintext:", decrypt(ct, key))
-
-else:
-    print("Invalid option!")
 
 ```
 ## OUTPUT
-<img width="1609" height="577" alt="image" src="https://github.com/user-attachments/assets/85665d96-9b3e-487f-8867-28677a4450ba" />
+<img width="1821" height="552" alt="image" src="https://github.com/user-attachments/assets/532397a3-862e-4b7b-99d0-3fc7aa021585" />
 
-<img width="1595" height="598" alt="image" src="https://github.com/user-attachments/assets/78bd437a-9628-44cd-a55c-2d6a01b33d4a" />
+<img width="1806" height="590" alt="image" src="https://github.com/user-attachments/assets/01adf517-44cc-4f43-980a-aac24024d5dd" />
 
 ## RESULT
 Thus the python program to implement the hill cipher substitution techniques is completed and successfully executed
